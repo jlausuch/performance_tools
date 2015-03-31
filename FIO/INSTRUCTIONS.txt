@@ -38,12 +38,12 @@ For more info or feedback, please contact me.
    DEVICE       This is the block device where to run the test on
 
 
-2. Run te tests. You have to options:
+2. Run the tests. You have 2 options:
    2a. Run all the test by issuing 
           >> runAll.sh [time(sec)]
    2b. Run a specific test by issuing
           >> runtest.sh <test_number> [time(sec)]
-          where <test_number> must be a number from 1 to 4, according to this:
+          where <test_number> must be a number from 1 to 4, according to this list:
              1:reference 
              2:reallife 
              3:writeintensive 
