@@ -1,4 +1,11 @@
 #!/bin/bash
+##################################################
+#
+# Author: Jose Lausuch
+# E-email: jlausuch@gmail.com
+# Organization: Ericsson GmbH
+#
+##################################################
 
 test=""
 if [ "$1" == "1" ]; then test="reference";
@@ -13,7 +20,7 @@ fi
 
 echo ">> Running $test test....."
 
-#Read parameteres from config file
+# Read parameteres from config file
 while read -r line 
 do 
    echo ${line}
@@ -24,18 +31,13 @@ if [ ! -z $2 ] && [ "$2" -eq "$2" ] 2>/dev/null; then
   export RUNTIME=$2
 fi
 
-
 tail -n 4 ./$test.fio
 
+# Run FIO command
 command="fio ${test}.fio  > ${test}-results.log;"
-
 echo -e "\n"$command
-
-#RUN COMMAND
 date1=$(date +"%s")
-
 fio $test.fio  > $test-results.log;
-
 date2=$(date +"%s")
 diff=$(($date2-$date1))
 
@@ -104,7 +106,6 @@ do
 done
 rd_lat=$(awk -vx=$total -vy=$numElements 'BEGIN{ print x/1000/y}')
 
-
 read -a arr <<<$write_lats
 total=0.00
 numElements=0
@@ -117,6 +118,7 @@ done
 wr_lat=$(awk -vx=$total -vy=$numElements 'BEGIN{ print x/1000/y}')
 
 
+# Output summary
 echo -e "\n===============================\nSummary:\n==============================="
 echo "IOPS(read):        $read_iops"
 echo "IOPS(write):       $write_iops"

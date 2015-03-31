@@ -1,4 +1,11 @@
 #!/bin/bash
+##################################################
+#
+# Author: Jose Lausuch
+# E-email: jlausuch@gmail.com
+# Organization: Ericsson GmbH
+#
+##################################################
 
 
 date1=$(date +"%s")
