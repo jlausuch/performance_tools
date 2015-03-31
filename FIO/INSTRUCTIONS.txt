@@ -10,7 +10,8 @@ This is a brief description about how to use this performance test framework bas
 For more info or feedback, please contact me.
 
 
-1. The file "parameters" contains the common input parameters for all FIO tests. Change this values according to your needs.        
+1. The file "parameters" contains the common input parameters for all FIO tests. 
+   Change this values according to your needs. 
 
    RUNTIME      Tell fio to terminate processing after the specified number
 		of seconds. It can be quite hard to determine for how long
@@ -49,7 +50,8 @@ For more info or feedback, please contact me.
              3:writeintensive 
              4:maxthroughput
 
-          In both cases, if [time(sec)] is not specified, it will take the one from the parameters file. If specified, it will overwrite that value. 
+          In both cases, if [time(sec)] is not specified, it will take the one from 
+          the parameters file. If specified, it will overwrite that value. 
 
           The 4 default profiles defined are:
 
@@ -71,6 +73,8 @@ For more info or feedback, please contact me.
 	     bs=128k
 
 
-3. When the tests are done, a .log file will be created containing the output of the FIO command with the given profile. Also, the script provides an output on the screen showing a summary of the results. 
+3. When the tests are done, a .log file will be created containing the output of the 
+   FIO command with the given profile. Also, the script provides an output on the 
+   screen showing a summary of the results. 
 
 4. Have fun!
