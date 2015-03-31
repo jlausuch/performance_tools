@@ -1,0 +1,12 @@
+[global]
+#size=100GB  # (If not set, fio will use the full size of the given files or devices
+direct=1
+ioengine=libaio
+iodepth=${IODEPTH}
+filename=${DEVICE}
+runtime=${RUNTIME}
+numjobs=${NUMJOBS}
+
+[writeintensive]
+rw=randwrite
+bs=8k

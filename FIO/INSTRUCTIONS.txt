@@ -1,0 +1,76 @@
+---------------------------------
+Author: Jose Angel Lausuch Sales
+Company: Ericsson GmbH
+Country: Germany
+Area: Cloud & Storage
+E-mail: jlausuch@gmail.com
+---------------------------------
+
+This is a brief description about how to use this performance test framework based on FIO.
+For more info or feedback, please contact me.
+
+
+1. The file "parameters" contains the common input parameters for all FIO tests. Change this values according to your needs.        
+
+   RUNTIME      Tell fio to terminate processing after the specified number
+		of seconds. It can be quite hard to determine for how long
+		a specified job will run, so this parameter is handy to
+		cap the total runtime to a given time.
+
+   NUMJOBS      Create the specified number of clones of this job. May be
+		used to setup a larger number of threads/processes doing
+		the same thing. Each thread is reported separately; to see
+		statistics for all clones as a whole, use group_reporting in
+		conjunction with new_group.
+
+   IODEPTH      This defines how many io units to keep in flight against
+		the file. The default is 1 for each file defined in this
+		job, can be overridden with a larger value for higher
+		concurrency. Note that increasing iodepth beyond 1 will not
+		affect synchronous ioengines (except for small degress when
+		verify_async is in use). Even async engines may impose OS
+		restrictions causing the desired depth not to be achieved.
+		This may happen on Linux when using libaio and not setting
+		direct=1, since buffered IO is not async on that OS. Keep an
+		eye on the IO depth distribution in the fio output to verify
+		that the achieved depth is as expected. Default: 1.
+
+   DEVICE       This is the block device where to run the test on
+
+
+2. Run te tests. You have to options:
+   2a. Run all the test by issuing 
+          >> runAll.sh [time(sec)]
+   2b. Run a specific test by issuing
+          >> runtest.sh <test_number> [time(sec)]
+          where <test_number> must be a number from 1 to 4, according to this:
+             1:reference 
+             2:reallife 
+             3:writeintensive 
+             4:maxthroughput
+
+          In both cases, if [time(sec)] is not specified, it will take the one from the parameters file. If specified, it will overwrite that value. 
+
+          The 4 default profiles defined are:
+
+             [reference]
+	     rw=randread 
+	     bs=8k
+
+ 	     [reallife]
+	     rw=randrw
+	     rwmixread=65
+	     bs=8k
+	
+	     [writeintensive]
+	     rw=randwrite
+	     bs=8k
+
+	     [maxthroughput]
+	     rw=read
+	     bs=128k
+
+
+3. When the tests are done, a .log file will be created containing the output of the FIO command with the given profile. Also, the script provides an output on the screen showing a summary of the results. 
+
+4. Have fun!
