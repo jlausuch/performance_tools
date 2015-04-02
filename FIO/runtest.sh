@@ -3,7 +3,6 @@
 #
 # Author: Jose Lausuch
 # E-email: jlausuch@gmail.com
-# Organization: Ericsson GmbH
 #
 ##################################################
 
@@ -18,6 +17,10 @@ else
    exit 1;
 fi
 
+mkdir -p ./results
+rm -f ./results/*
+numjobs=0
+
 echo ">> Running $test test....."
 
 # Read parameteres from config file
@@ -25,6 +28,9 @@ while read -r line
 do 
    echo ${line}
    export ${line}
+   if [[ ${line} == "NUMJOBS"* ]]; then
+     numjobs="$(echo ${line} | cut -c 9-)"
+   fi
 done< "parameters"
 
 if [ ! -z $2 ] && [ "$2" -eq "$2" ] 2>/dev/null; then
@@ -34,10 +40,8 @@ fi
 tail -n 4 ./$test.fio
 
 # Run FIO command
-command="fio ${test}.fio  > ${test}-results.log;"
-echo -e "\n"$command
 date1=$(date +"%s")
-fio $test.fio  > $test-results.log;
+fio $test.fio  --write_bw_log=./results/result --write_lat_log=./results/result --write_iops_log=./results/result > ./results/$test-results.log;
 date2=$(date +"%s")
 diff=$(($date2-$date1))
 
@@ -45,8 +49,8 @@ diff=$(($date2-$date1))
 #######################
 # Calculate IOPS 
 #######################
-read_iops_array="$(cat $test-results.log | grep iops | grep read | awk '{print $5;}' | awk '{print substr($0,6)}' | awk 'gsub(",$","")')"
-write_iops_array="$(cat $test-results.log | grep iops | grep write | awk '{print $4;}' | awk '{print substr($0,6)}' | awk 'gsub(",$","")')"
+read_iops_array="$(cat ./results/$test-results.log | grep iops | grep read | awk '{print $5;}' | awk '{print substr($0,6)}' | awk 'gsub(",$","")')"
+write_iops_array="$(cat ./results/$test-results.log | grep iops | grep write | awk '{print $4;}' | awk '{print substr($0,6)}' | awk 'gsub(",$","")')"
 #we get an array, each value corresponds to a diferent thread, we have to sum them
 
 read -a arr <<<$read_iops_array
@@ -67,8 +71,8 @@ done
 #######################
 # Calculate Throughput
 #######################
-read_th="$(cat $test-results.log  | grep aggrb | grep -i read | awk '{print $3;}' | awk '{print substr($0,7)}' | awk 'gsub(",$","")' | tr "\n" " ")"
-write_th="$(cat $test-results.log  | grep aggrb | grep -i write | awk '{print $3;}' | awk '{print substr($0,7)}' | awk 'gsub(",$","")' | tr "\n" " ")"
+read_th="$(cat ./results/$test-results.log  | grep aggrb | grep -i read | awk '{print $3;}' | awk '{print substr($0,7)}' | awk 'gsub(",$","")' | tr "\n" " ")"
+write_th="$(cat ./results/$test-results.log  | grep aggrb | grep -i write | awk '{print $3;}' | awk '{print substr($0,7)}' | awk 'gsub(",$","")' | tr "\n" " ")"
 
 if [ $read_iops -eq 0 ]; then 
    read_th=0
@@ -84,15 +88,13 @@ write_th="$(echo $write_th |awk '{$1/=1024;printf "%.2f MB/s\n",$1}')"
 #######################
 # Calculate Latency
 #######################
+read_lats="$(cat ./results/$test-results.log | grep -A 3 read | grep " lat" | awk '{print $5;}' | awk '{print substr($0,5)}' | awk 'gsub(",$","")')"
+write_lats="$(cat ./results/$test-results.log | grep -A 3 write | grep " lat" | awk '{print $5;}' | awk '{print substr($0,5)}' | awk 'gsub(",$","")')"
 if [ $read_iops -eq 0 ]; then
    read_lats=0 
-   write_lats="$(cat $test-results.log | grep -A 3 write | grep " lat" | awk '{print $5;}' | awk '{print substr($0,5)}' | awk 'gsub(",$","")')"
-elif [ $write_iops -eq 0 ]; then
-   read_lats="$(cat $test-results.log | grep -A 3 read | grep " lat" | awk '{print $5;}' | awk '{print substr($0,5)}' | awk 'gsub(",$","")')"
+fi
+if [ $write_iops -eq 0 ]; then
    write_lats=0
-else
-   read_lats="$(cat $test-results.log | grep -A 3 read | grep " lat" | awk '{print $5;}' | awk '{print substr($0,5)}' | awk 'gsub(",$","")')"
-   write_lats="$(cat $test-results.log | grep -A 3 write | grep " lat" | awk '{print $5;}' | awk '{print substr($0,5)}' | awk 'gsub(",$","")')"
 fi
 #We have to calculate the average of the latencies of all the threads (they are not accummulative like throughput)
 read -a arr <<<$read_lats
@@ -127,3 +129,32 @@ echo "THROUGHPUT(write): $write_th"
 echo "LATENCY(read):     ${rd_lat} ms"
 echo "LATENCY(write):    ${wr_lat} ms"
 echo "$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed."
+
+
+function parse_bw_file() {
+   cat ./results/result_bw.log | awk 'NR % 2 == 1' | awk '{ print $2 }' | awk 'gsub(",$","")' > ./results/bw_read_all_threads.log
+   cat ./results/result_bw.log | awk 'NR % 2 == 0' | awk '{ print $2 }' | awk 'gsub(",$","")' > ./results/bw_write_all_threads.log
+   totallines=$(cat ./results/bw_read_all_threads.log | wc -l)
+   lines=$(( $totallines / $numjobs ))
+   cat ./results/bw_read_all_threads.log | awk -vN="$lines" '{s[(NR-1)%N]+=$0}END{for(i in s){print s[i]}}' > ./results/bw_read.log
+   cat ./results/bw_write_all_threads.log | awk -vN="$lines" '{s[(NR-1)%N]+=$0}END{for(i in s){print s[i]}}' > ./results/bw_write.log
+   rm ./results/bw_read_all_threads.log
+   rm ./results/bw_write_all_threads.log
+   rm ./results/result_bw.log
+}
+
+function parse_iops_file() {
+   cat ./results/result_iops.log | awk 'NR % 2 == 1' | awk '{ print $2 }' | awk 'gsub(",$","")' > ./results/iops_read_all_threads.log
+   cat ./results/result_iops.log | awk 'NR % 2 == 0' | awk '{ print $2 }' | awk 'gsub(",$","")' > ./results/iops_write_all_threads.log
+   totallines=$(cat ./results/iops_read_all_threads.log | wc -l)
+   lines=$(( $totallines / $numjobs ))
+   cat ./results/iops_read_all_threads.log | awk -vN="$lines" '{s[(NR-1)%N]+=$0}END{for(i in s){print s[i]}}' > ./results/iops_read.log
+   cat ./results/iops_write_all_threads.log | awk -vN="$lines" '{s[(NR-1)%N]+=$0}END{for(i in s){print s[i]}}' > ./results/iops_write.log
+   rm ./results/iops_read_all_threads.log
+   rm ./results/iops_write_all_threads.log
+   rm ./results/result_iops.log
+}
+
+
+parse_bw_file
+parse_iops_file
