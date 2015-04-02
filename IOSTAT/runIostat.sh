@@ -14,10 +14,14 @@ if [ -z $1 ]; then
    exit 1
 fi
 
+if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ "$1" == "--h" ]; then
+   print_help
+   exit 0
+fi
 
 ls -l $1 &>/dev/null; 
 if [ $? -ne 0 ]; then 
-   print_help
+   echo "The device provided does not exist. "
    exit 1
 fi
 
@@ -29,6 +33,7 @@ d_results="results"
 if [ ! -z $2 ]; then 
    d_results=$2
 fi
+
 f_output=$d_results"/f_output"
 f_parsed=$d_results"/f_parsed"
 f_read_iops=$d_results"/read_iops.txt"
@@ -55,8 +60,7 @@ function parse_output() {
    cat $f_parsed | awk '{print $7}'  | sed "s/,/./g" > $f_write_bw
    cat $f_parsed | awk '{print $11}' | sed "s/,/./g" > $f_read_lat
    cat $f_parsed | awk '{print $12}' | sed "s/,/./g" > $f_write_lat
-   echo "Statistics collected and stored in $d_results/"
-   echo ""
+   echo -e "Statistics collected and stored in $d_results/ \n"
 }
 
 trap parse_output SIGINT SIGTERM
